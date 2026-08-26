@@ -1,9 +1,9 @@
 # Underwrite
 
 Underwrite is an auditable financial research workbench built with Next.js. It
-recreates the core FinanceHarness ideas as a web product: stable reasoning
-modes, a constant typed tool registry, deferred schema loading, structured
-result chaining, reusable financial workflows, and a live run trajectory.
+combines stable reasoning modes, a constant typed tool registry, deferred
+schema loading, structured result chaining, reusable financial workflows, and
+a live run trajectory.
 
 ![Underwrite mark](src/app/icon.svg)
 
@@ -153,16 +153,8 @@ pnpm build
 src/app/api/             SSE research, model discovery, health
 src/components/          Underwrite workspace and model settings
 src/lib/harness/         modes, providers, tools, skills, agent loops
-docs/ARCHITECTURE.md     paper versus public repo and product design
+docs/ARCHITECTURE.md     product layers, invariants, and security boundaries
 ```
 
-Read [the architecture note](docs/ARCHITECTURE.md) for the boundary between
-the public FinanceHarness runtime and the larger FinanceGym research system.
-
-## Attribution
-
-Underwrite is an independent TypeScript implementation inspired by
-[FinanceHarness](https://github.com/Yijia-Xiao/FinanceHarness) and the paper
-[FinanceHarness: Autonomous Financial Deep Research Framework](https://arxiv.org/abs/2607.27853).
-See [NOTICE](NOTICE) for details.
-
+Read [the architecture note](docs/ARCHITECTURE.md) for the product's layers,
+execution invariants, and deployment security boundary.

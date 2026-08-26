@@ -1,16 +1,10 @@
 # Underwrite architecture
 
-## What the upstream project actually contains
-
-The public FinanceHarness repository ships a Python agent harness, CLI, FastAPI
-service, provider adapters, financial tools, and five markdown workflow skills.
-It does not ship the complete point-in-time corpus, finance entity graph,
-benchmark-generation pipeline, or full training environment described in the
-paper. Those larger systems are research infrastructure around the public
-runtime.
-
-Underwrite recreates the public runtime contract as a deployable Next.js
-product. It does not claim to reproduce FinanceGym or its private corpus.
+Underwrite is a deployable Next.js product with a provider-independent agent
+runtime, typed financial tools, reusable workflows, and a streamed research
+interface. The system is designed around an auditable contract: model reasoning
+can change, but tool schemas, result chaining, limits, and visible events remain
+under application control.
 
 ## Product layers
 
@@ -50,4 +44,3 @@ model URLs unless `ALLOW_PRIVATE_MODEL_ENDPOINTS=true` is explicitly set.
 For a multi-user commercial deployment, add authentication, encrypted secret
 storage, persistent rate limiting, durable sessions, and an audit log before
 allowing shared provider credentials.
-

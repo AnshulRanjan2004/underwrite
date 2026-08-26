@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "An auditable financial research agent with research, analytical, and automatic modes.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"

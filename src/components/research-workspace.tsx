@@ -15,6 +15,7 @@ import {
   Moon,
   PaperPlaneTilt,
   SpinnerGap,
+  Stack,
   Stop,
   Sun,
   Wrench,
@@ -23,6 +24,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import Link from "next/link";
 import { BRAND } from "@/lib/brand";
 import { MODES } from "@/lib/harness/modes";
 import type { ModelConfig, ResearchMode, RunEvent } from "@/lib/harness/types";
@@ -187,7 +189,7 @@ export function ResearchWorkspace() {
       <header className="topbar">
         <div className="brand-lockup"><BrandLogo /><span><strong>{BRAND.name}</strong><small>Financial research workbench</small></span></div>
         <ModeSwitch value={mode} onChange={setMode} />
-        <div className="topbar-actions"><button className="icon-button" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}</button><ModelSettings value={modelConfig} onChange={setModelConfig} /></div>
+        <div className="topbar-actions"><Link className="icon-button" href="/architecture" aria-label="How Underwrite works"><Stack size={18} /></Link><button className="icon-button" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}</button><ModelSettings value={modelConfig} onChange={setModelConfig} /></div>
       </header>
 
       <div className="workspace-grid">
@@ -195,7 +197,7 @@ export function ResearchWorkspace() {
           <button className="new-research" type="button" onClick={() => { setSubmittedQuestion(""); setQuestion(""); setReport(""); setEvents([]); setError(""); }}>New research <ArrowRight size={16} /></button>
           <section className="rail-section"><h2><ClockCounterClockwise size={15} />Recent</h2>{recent.length ? <div className="recent-list">{recent.map((item) => <button type="button" key={item} onClick={() => void startRun(item)}>{item}</button>)}</div> : <p className="rail-empty">Your latest questions will appear here.</p>}</section>
           <section className="rail-section capability-section"><h2><Database size={15} />Harness</h2><div className="registry-stat"><strong>{health.tools || 22}</strong><span>constant tools</span></div><div className="registry-stat"><strong>{health.skills || 6}</strong><span>workflow skills</span></div><p>Modes change the reasoning policy, never the available trajectory.</p></section>
-          <footer className="rail-footer"><span>Informational research only</span><a href="https://github.com/Yijia-Xiao/FinanceHarness" target="_blank" rel="noreferrer">Upstream inspiration</a></footer>
+          <footer className="rail-footer"><span>Informational research only</span><Link href="/architecture">How Underwrite works</Link></footer>
         </aside>
 
         <section className="research-stage">

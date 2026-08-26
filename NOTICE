@@ -1,15 +1,5 @@
 Underwrite
 Copyright 2026
 
-This project is an original TypeScript and Next.js implementation inspired by
-FinanceHarness: Autonomous Financial Deep Research Framework by Yijia Xiao,
-Rujun Han, Yanfei Chen, Zifeng Wang, Ke Jiang, Zhongying CuiZhu, Vishy
-Tirumalashetty, Wei Wang, Burak Gokturk, Tomas Pfister, and Chen-Yu Lee.
-
-Upstream project: https://github.com/Yijia-Xiao/FinanceHarness
-Paper: https://arxiv.org/abs/2607.27853
-
-FinanceHarness is distributed under the Apache License 2.0. No upstream source
-files are copied into this implementation. The architecture, interfaces, and
+The architecture, interfaces, runtime, financial tools, documentation, and
 product UI in Underwrite are implemented independently in TypeScript.
-
