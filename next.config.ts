@@ -15,7 +15,9 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // Vercel packages Next routes itself. Keeping standalone for Docker while
+  // disabling it on Vercel avoids a Next 16.3 adapter trace-file bug.
+  output: process.env.VERCEL ? undefined : "standalone",
   poweredByHeader: false,
   async headers() {
     return [
