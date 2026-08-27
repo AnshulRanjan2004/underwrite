@@ -299,6 +299,44 @@ const toolSpecs: ToolSpec[] = [
     },
   },
   {
+    name: "data_instrument_search",
+    displayName: "data.instrument.search",
+    tier: "deferred",
+    description: "Resolve names or partial tickers across global equities, ETFs, funds, indices, futures, currencies, and crypto instruments available from Yahoo Finance.",
+    tags: ["market", "instrument", "discovery", "global"],
+    schema: z.object({
+      query: z.string().min(1),
+      limit: z.number().int().min(1).max(10).optional(),
+    }),
+    execute: async (args) => {
+      const { query, limit = 8 } = z
+        .object({ query: z.string().min(1), limit: z.number().int().min(1).max(10).optional() })
+        .parse(args);
+      const payload = await fetchYahoo(
+        `/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=${limit}&newsCount=0`,
+      );
+      const quotes = Array.isArray(payload.quotes) ? payload.quotes : [];
+      const instruments = quotes.slice(0, limit).map((quote) => {
+        const item = quote as Record<string, unknown>;
+        return {
+          symbol: item.symbol,
+          name: item.longname || item.shortname || item.symbol,
+          instrumentType: item.quoteType || item.typeDisp,
+          exchange: item.exchDisp || item.exchange,
+          sector: item.sectorDisp || item.sector,
+          industry: item.industryDisp || item.industry,
+        };
+      });
+      if (!instruments.length) {
+        throw new ToolExecutionError(`No instruments found for ${query}.`);
+      }
+      const markdown = instruments
+        .map((item, index) => `${index + 1}. ${item.name} (${item.symbol}) | ${item.instrumentType || "instrument"} | ${item.exchange || "exchange unavailable"}`)
+        .join("\n");
+      return result(markdown, { query, instruments }, { provider: "Yahoo Finance" });
+    },
+  },
+  {
     name: "data_equity_reference",
     displayName: "data.equity.reference",
     tier: "deferred",
@@ -334,8 +372,8 @@ const toolSpecs: ToolSpec[] = [
     name: "data_equity_prices",
     displayName: "data.equity.prices",
     tier: "deferred",
-    description: "Return dated adjusted price history and volume for a listed equity over a requested range and interval.",
-    tags: ["equity", "prices", "time-series"],
+    description: "Return dated adjusted price history and volume for a Yahoo Finance instrument over a requested range and interval.",
+    tags: ["market", "equity", "etf", "index", "prices", "time-series"],
     schema: z.object({
       symbol: z.string(),
       range: z.enum(["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y"]).optional(),

@@ -12,7 +12,7 @@ a live run trajectory.
 - Three stable modes: `auto`, `research`, and `analytical`
 - BYOK model settings for OpenAI, Gemini, Ollama, and OpenAI-compatible APIs
 - Editable model IDs plus provider model discovery
-- 22 tools across web research, market data, valuation, risk, and scenario
+- 23 tools across web research, global instrument discovery, market data, valuation, risk, and scenario
   forecasting
 - Six reusable skills, including DCF, relative valuation, deep dive, and
   probability-weighted stock forecasting
@@ -23,6 +23,25 @@ a live run trajectory.
 
 The no-key preview performs a real market-data run, so the application can be
 evaluated without first configuring an LLM.
+
+## Market coverage
+
+Yahoo Finance is the current free market-data provider. Underwrite can resolve
+and chart the instrument types exposed by that provider, including US and Indian
+stocks, ETFs, funds, indices, futures, currencies, and crypto assets. Examples:
+
+| Instrument | Symbol |
+| --- | --- |
+| Reliance Industries on NSE | `RELIANCE.NS` |
+| NIFTY 50 index | `^NSEI` |
+| NIFTY BeES ETF | `NIFTYBEES.NS` |
+| Apple | `AAPL` |
+| S&P 500 index | `^GSPC` |
+| SPDR S&P 500 ETF | `SPY` |
+
+The `data_instrument_search` tool resolves company or fund names before the
+price tools run. Coverage and fundamental fields vary by exchange and security
+type because the provider does not expose identical fields for every listing.
 
 ## Quick start
 

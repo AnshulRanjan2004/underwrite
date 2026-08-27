@@ -23,6 +23,11 @@ under application control.
 6. `src/lib/harness/skills.ts`: reusable workflows that reveal and coordinate
    existing tools without adding application code.
 
+Market instruments are resolved through Yahoo Finance search and chart
+endpoints. The same price-history path supports provider-listed stocks, ETFs,
+funds, indices, futures, currencies, and crypto symbols, including NSE and BSE
+suffixes.
+
 ## Stable invariants
 
 - `auto`, `research`, and `analytical` are prompt policies over one registry.
@@ -32,6 +37,23 @@ under application control.
 - The browser receives lifecycle events over SSE.
 - A selected model changes the backbone, not the tools or mode semantics.
 - Forecasts are explicit probability-weighted scenarios, not guaranteed prices.
+
+## Reference architecture boundary
+
+The deployed product implements the model-agnostic runtime portion of the
+reference architecture: orchestration, prompt modes, a constant tiered tool
+registry, schema validation, result chaining, multiple model providers, and an
+inspectable report trace.
+
+The offline evaluation and training system is intentionally not represented as
+deployed functionality. A point-in-time document corpus, embedding and vector
+index, semantic entity graph, benchmark question and rubric generation, expert
+curation, and reinforcement training are future evaluation infrastructure. The
+architecture page marks these components as reference-only so that research
+results are not confused with metrics measured on this application.
+
+The source-backed evaluation values displayed on the architecture page come
+from [the public reference methodology](https://arxiv.org/abs/2607.27853).
 
 ## Security boundary
 

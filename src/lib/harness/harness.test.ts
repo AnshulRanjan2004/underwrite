@@ -27,6 +27,9 @@ describe("preview ticker parsing", () => {
     expect(tickerFrom("Give me an NVDA snapshot")).toBe("NVDA");
     expect(tickerFrom("research $msft valuation")).toBe("MSFT");
     expect(tickerFrom("Estimate a DCF for Apple")).toBe("AAPL");
+    expect(tickerFrom("Review RELIANCE.NS on the NSE")).toBe("RELIANCE.NS");
+    expect(tickerFrom("Compare ^NSEI with ^GSPC")).toBe("^NSEI");
+    expect(tickerFrom("Analyze the NIFTYBEES.NS ETF")).toBe("NIFTYBEES.NS");
   });
 });
 

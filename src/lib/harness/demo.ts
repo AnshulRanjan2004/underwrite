@@ -10,6 +10,7 @@ const COMPANY_TICKERS: Record<string, string> = {
   google: "GOOGL",
   meta: "META",
   tesla: "TSLA",
+  "reliance industries": "RELIANCE.NS",
 };
 
 export function tickerFrom(question: string) {
@@ -17,10 +18,12 @@ export function tickerFrom(question: string) {
     question.toLowerCase().includes(name),
   );
   if (company) return company[1];
-  const explicitCashTicker = question.match(/\$([A-Za-z]{1,5})\b/)?.[1];
+  const explicitCashTicker = question.match(/\$([A-Za-z0-9.^=-]{1,20})\b/)?.[1];
   if (explicitCashTicker) return explicitCashTicker.toUpperCase();
+  const providerTicker = question.match(/(?:\^[A-Z0-9]{2,12}|\b[A-Z0-9]{1,12}\.(?:NS|BO)\b)/)?.[0];
+  if (providerTicker) return providerTicker.toUpperCase();
   const excluded = new Set(["DCF", "WACC", "CAPM", "USD", "ETF", "CEO", "CFO"]);
-  return question.match(/\b[A-Z]{1,5}\b/g)?.find((item) => !excluded.has(item)) || "AAPL";
+  return question.match(/\b[A-Z]{1,10}\b/g)?.find((item) => !excluded.has(item)) || "AAPL";
 }
 
 function latestPriceData(priceResult?: ToolResult) {

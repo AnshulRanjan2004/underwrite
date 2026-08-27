@@ -196,7 +196,7 @@ export function ResearchWorkspace() {
         <aside className="left-rail">
           <button className="new-research" type="button" onClick={() => { setSubmittedQuestion(""); setQuestion(""); setReport(""); setEvents([]); setError(""); }}>New research <ArrowRight size={16} /></button>
           <section className="rail-section"><h2><ClockCounterClockwise size={15} />Recent</h2>{recent.length ? <div className="recent-list">{recent.map((item) => <button type="button" key={item} onClick={() => void startRun(item)}>{item}</button>)}</div> : <p className="rail-empty">Your latest questions will appear here.</p>}</section>
-          <section className="rail-section capability-section"><h2><Database size={15} />Harness</h2><div className="registry-stat"><strong>{health.tools || 22}</strong><span>constant tools</span></div><div className="registry-stat"><strong>{health.skills || 6}</strong><span>workflow skills</span></div><p>Modes change the reasoning policy, never the available trajectory.</p></section>
+          <section className="rail-section capability-section"><h2><Database size={15} />Harness</h2><div className="registry-stat"><strong>{health.tools || 23}</strong><span>constant tools</span></div><div className="registry-stat"><strong>{health.skills || 6}</strong><span>workflow skills</span></div><p>Modes change the reasoning policy, never the available trajectory.</p></section>
           <footer className="rail-footer"><span>Informational research only</span><Link href="/architecture">How Underwrite works</Link></footer>
         </aside>
 

@@ -8,9 +8,9 @@ export type SkillDefinition = {
 export const SKILLS: SkillDefinition[] = [
   {
     name: "ticker-snapshot",
-    description: "Create a concise identity, price, trend, and ratio snapshot for one listed equity.",
-    tools: ["data_equity_reference", "data_equity_prices", "data_equity_ratios"],
-    guidance: "Resolve the ticker, gather the latest price and recent history, then summarize valuation ratios with dates and units.",
+    description: "Create a concise identity, price, and trend snapshot for a global stock, ETF, index, fund, future, currency, or crypto instrument.",
+    tools: ["data_instrument_search", "data_equity_reference", "data_equity_prices", "data_equity_ratios"],
+    guidance: "Resolve the provider symbol first, gather the latest price and recent history, then add ratios only when the selected instrument exposes fundamental data. Always include exchange, currency, dates, and units.",
   },
   {
     name: "dcf-valuation",
