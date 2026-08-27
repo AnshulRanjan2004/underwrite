@@ -54,6 +54,11 @@ results are not confused with metrics measured on this application.
 
 The source-backed evaluation values displayed on the architecture page come
 from [the public reference methodology](https://arxiv.org/abs/2607.27853).
+The full system map reproduces the complete evidence, graph-building, question
+generation, curation, and training path while marking deployed and reference-only
+layers separately. The cost-quality frontier uses published outcome scores and
+query-cost positions estimated from the published chart. It is not presented as
+a benchmark rerun on this repository.
 
 ## Security boundary
 

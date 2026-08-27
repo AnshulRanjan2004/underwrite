@@ -3,23 +3,33 @@
 import {
   ArrowLeft,
   ArrowRight,
+  Article,
   Brain,
+  CalendarBlank,
+  Cards,
   ChartLineUp,
   CheckCircle,
   Cloud,
   Cpu,
   Database,
+  FileText,
+  Funnel,
   Function as FunctionIcon,
   Gauge,
+  GitBranch,
   Globe,
-  Lightning,
   LinkSimple,
+  ListChecks,
   LockKey,
+  MagnifyingGlass,
   Moon,
   Path,
+  Scales,
+  ShareNetwork,
   ShieldCheck,
   Stack,
   Sun,
+  ThumbsUp,
   Wrench,
 } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -72,17 +82,160 @@ const BACKBONE_ROWS = [
   { name: "Overall", faithfulness: 4.08, grounding: 4.21, coherence: 4.80, completeness: 4.91 },
 ];
 
-const SCALE_POINTS = [
-  { name: "Gemma-4-26B", size: 26, score: 25.7, dx: -4, dy: 26 },
-  { name: "Specialized runtime", size: 27, score: 32.4, dx: 12, dy: -12, primary: true },
-  { name: "Tongyi-DR-30B", size: 30, score: 28.2, dx: 12, dy: -12 },
-  { name: "gpt-oss-120B", size: 120, score: 18.7, dx: 12, dy: -12 },
-  { name: "Qwen3-235B", size: 235, score: 26.8, dx: 12, dy: -12 },
-  { name: "DeepSeek-v3.2", size: 600, score: 28.9, dx: -132, dy: -12 },
+type FrontierGroup = "runtime" | "react" | "agentic" | "finetuned";
+
+const FRONTIER_POINTS: Array<{
+  name: string;
+  cost: number;
+  score: number;
+  group: FrontierGroup;
+  label?: boolean;
+  dx?: number;
+  dy?: number;
+}> = [
+  { name: "Claude Opus 5", cost: 3.3, score: 44.9, group: "runtime", label: true, dx: 13, dy: 5 },
+  { name: "Claude Opus 4.7", cost: 1.15, score: 40.0, group: "runtime", label: true, dx: 13, dy: 5 },
+  { name: "Claude Opus 4.8", cost: 0.65, score: 38.3, group: "runtime", label: true, dx: 13, dy: 5 },
+  { name: "Gemini 3.1 Pro", cost: 0.32, score: 35.0, group: "runtime", label: true, dx: 13, dy: -14 },
+  { name: "Gemini 3 Flash", cost: 0.12, score: 34.9, group: "runtime", label: true, dx: -12, dy: 28 },
+  { name: "Qwen 3.6 27B", cost: 0.062, score: 32.4, group: "runtime", label: true, dx: -12, dy: 8 },
+  { name: "Claude Opus 4.7", cost: 2.0, score: 34.1, group: "react" },
+  { name: "GPT-5.5", cost: 2.05, score: 31.8, group: "react" },
+  { name: "Gemini 3.1 Pro", cost: 0.75, score: 33.2, group: "react" },
+  { name: "Gemini 3 Flash", cost: 0.2, score: 30.2, group: "react" },
+  { name: "GLM-5", cost: 0.15, score: 30.4, group: "react" },
+  { name: "DeepSeek v3.2", cost: 0.075, score: 28.9, group: "react" },
+  { name: "Qwen3 235B", cost: 0.075, score: 26.8, group: "react" },
+  { name: "Gemma 4 26B", cost: 0.03, score: 25.7, group: "react" },
+  { name: "gpt-oss 120B", cost: 0.04, score: 18.7, group: "react" },
+  { name: "TTD-DR", cost: 0.5, score: 31.5, group: "agentic", label: true, dx: 12, dy: 5 },
+  { name: "GPT-Researcher", cost: 0.055, score: 30.4, group: "agentic", label: true, dx: 12, dy: 5 },
+  { name: "deepagents", cost: 0.35, score: 28.1, group: "agentic" },
+  { name: "OpenClaw", cost: 0.3, score: 27.7, group: "agentic" },
+  { name: "STORM", cost: 0.2, score: 27.4, group: "agentic" },
+  { name: "Tongyi-DR", cost: 0.035, score: 28.2, group: "finetuned", label: true, dx: -12, dy: 5 },
+  { name: "OpenResearcher", cost: 0.035, score: 27.2, group: "finetuned" },
+  { name: "MiroThinker", cost: 0.035, score: 21.2, group: "finetuned" },
 ];
 
-const xForSize = (size: number) => 82 + ((Math.log10(size) - Math.log10(20)) / (Math.log10(700) - Math.log10(20))) * 758;
-const yForScore = (score: number) => 390 - ((score - 15) / 20) * 340;
+const COST_TICKS = [3, 2, 1, 0.5, 0.3, 0.2, 0.1, 0.05, 0.03];
+const SCORE_TICKS = [20, 25, 30, 35, 40, 45];
+const costX = (cost: number) => 100 + ((Math.log10(4) - Math.log10(cost)) / (Math.log10(4) - Math.log10(0.025))) * 830;
+const scoreY = (score: number) => 500 - ((score - 17) / 30) * 430;
+
+function DiagramNode({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
+  return <div className="map-node">{icon}<span>{children}</span></div>;
+}
+
+function DetailedArchitectureMap() {
+  return (
+    <section className="full-system-map" id="pipeline">
+      <div className="map-section-copy">
+        <h2>The full research system</h2>
+        <p>Every stage from source intake to model execution, benchmark construction, quality control, and training.</p>
+        <div className="map-legend"><span><i data-kind="live" /> Live in Underwrite</span><span><i data-kind="reference" /> Reference evaluation layer</span></div>
+      </div>
+
+      <div className="system-map-scroll" role="region" aria-label="Detailed Underwrite research architecture" tabIndex={0}>
+        <div className="system-map-canvas">
+          <div className="map-top-row">
+            <section className="map-corpus map-reference-zone">
+              <div className="map-zone-heading"><h3>Evidence infrastructure</h3><span>Reference layer</span></div>
+              <div className="map-corpus-grid">
+                <div className="map-source-chain">
+                  <DiagramNode icon={<Database size={22} />}>Web corpus</DiagramNode>
+                  <div className="map-down-label">Domain filter</div>
+                  <DiagramNode icon={<Article size={22} />}>Financial articles and filings</DiagramNode>
+                  <div className="map-down-label">Key facts extraction</div>
+                </div>
+                <div className="map-sandbox">
+                  <div className="map-sandbox-title"><strong>Sandbox environment</strong><small>Point-in-time search sandbox</small></div>
+                  <DiagramNode icon={<FunctionIcon size={22} />}>Embedding model</DiagramNode>
+                  <DiagramNode icon={<MagnifyingGlass size={22} />}>Vector index</DiagramNode>
+                </div>
+              </div>
+              <div className="map-env-link"><span>Corpus</span><ArrowRight size={18} /><span>Search environment</span></div>
+            </section>
+
+            <section className="map-runtime map-live-zone">
+              <div className="map-zone-heading"><h3>Underwrite</h3><span>Live runtime</span></div>
+              <div className="map-runtime-cells">
+                <div><Path size={28} /><strong>Orchestration</strong></div>
+                <div><Brain size={28} /><strong>Capability</strong></div>
+                <div><Wrench size={28} /><strong>Tools</strong></div>
+                <div><Cpu size={28} /><strong>Runtime</strong></div>
+                <div><Cloud size={28} /><strong>Model layer</strong></div>
+              </div>
+              <p>Agent execution stack combining provider adapters, modular tooling, and specialized finance workflows.</p>
+              <div className="map-runtime-link" aria-hidden="true"><ArrowLeft size={18} /></div>
+            </section>
+          </div>
+
+          <div className="map-vertical-connectors" aria-hidden="true"><span /><span /></div>
+
+          <section className="map-data-factory map-reference-zone">
+            <div className="map-factory-grid">
+              <article className="map-factory-column map-graph-column">
+                <DiagramNode icon={<ShareNetwork size={25} />}>Semantic graph</DiagramNode>
+                <span className="map-column-label">Motif mining algorithm</span>
+                <div className="map-inner-dashed">
+                  <div className="map-entity-title">Finance entity graph</div>
+                  <div className="map-entity-rows">
+                    <div><strong>Linkage</strong><span>Policy change → sector margin → listed company</span></div>
+                    <div><strong>Narrative</strong><span>AI capex → power demand → infrastructure spend</span></div>
+                    <div><strong>Divergence</strong><span>Consensus growth versus price and margin evidence</span></div>
+                  </div>
+                  <DiagramNode icon={<Cards size={22} />}>Situations</DiagramNode>
+                </div>
+                <h3>Graph building</h3>
+              </article>
+
+              <article className="map-factory-column map-question-column">
+                <div className="map-cutoff-node"><CalendarBlank size={25} /><div><strong>Cutoff-date selection</strong><small>z(volume) × entity diversity × relevance entropy</small></div></div>
+                <span className="map-column-label">Finance narratives</span>
+                <div className="map-inner-dashed map-generation-box">
+                  <div className="map-entity-title">Conditional generation</div>
+                  <div className="map-question-tree">
+                    <div><strong>Questions</strong><span>How could oil prices and refining spreads affect Reliance?</span></div>
+                    <div><strong>Rubrics</strong><span>Quantify segment sensitivity and cite each assumption.</span></div>
+                    <div><strong>Thesis</strong><span>Trace the valuation impact through O2C EBITDA and capex.</span></div>
+                  </div>
+                </div>
+                <DiagramNode icon={<Database size={22} />}>Question pool</DiagramNode>
+                <h3>Question generation</h3>
+              </article>
+
+              <article className="map-factory-column map-training-column">
+                <div className="map-training-environment">
+                  <strong>Training environment</strong>
+                  <div className="map-training-lane">
+                    <span>Question</span><ArrowRight size={14} /><span>Policy model</span><ArrowRight size={14} /><span>Report</span><ArrowRight size={14} /><span>Rubric reward</span>
+                  </div>
+                  <div className="map-training-lane">
+                    <span>Question</span><ArrowRight size={14} /><span>Candidate group</span><ArrowRight size={14} /><span>Judge scores</span><ArrowRight size={14} /><span>Advantage</span>
+                  </div>
+                  <small>Model serving and reinforcement-learning frameworks</small>
+                </div>
+                <div className="map-curation-grid">
+                  <DiagramNode icon={<ThumbsUp size={20} />}>Expert rating</DiagramNode>
+                  <DiagramNode icon={<Scales size={20} />}>Group balancing</DiagramNode>
+                  <DiagramNode icon={<Funnel size={20} />}>Curation chain</DiagramNode>
+                  <DiagramNode icon={<ListChecks size={20} />}>Quality control</DiagramNode>
+                </div>
+                <h3>Curation and training</h3>
+              </article>
+            </div>
+            <div className="map-factory-flow" aria-hidden="true">
+              <span>Situations</span><ArrowRight size={18} /><span>Question pool</span><ArrowRight size={18} /><span>Curated training set</span>
+            </div>
+            <div className="map-factory-title"><GitBranch size={21} /><strong>Evaluation data factory</strong></div>
+          </section>
+        </div>
+      </div>
+      <p className="map-disclosure">Solid border marks the deployed Underwrite runtime. Dashed regions reproduce the full research evaluation and training path but are not active product features.</p>
+    </section>
+  );
+}
 
 export function ArchitectureOverview() {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -118,57 +271,22 @@ export function ArchitectureOverview() {
         </div>
       </header>
 
-      <section className="architecture-hero" id="pipeline">
+      <section className="architecture-hero architecture-hero-intro" id="overview">
         <div className="architecture-hero-copy">
           <span className="architecture-kicker">System architecture</span>
           <h1>Inside Underwrite.</h1>
           <p>Underwrite combines model reasoning, live evidence, and deterministic finance tools in one inspectable execution loop.</p>
           <Link className="architecture-back" href="/"><ArrowLeft size={16} /> Open workbench</Link>
         </div>
-
-        <div className="architecture-blueprint" aria-label="Underwrite system architecture">
-          <div className="blueprint-upper">
-            <section className="blueprint-inputs">
-              <h2>Live inputs</h2>
-              <div className="blueprint-node"><Brain size={18} /><span>User question</span></div>
-              <div className="blueprint-node"><Globe size={18} /><span>Public web evidence</span></div>
-              <div className="blueprint-node"><Database size={18} /><span>Global market instruments</span></div>
-            </section>
-            <section className="blueprint-engine">
-              <h2>Underwrite engine</h2>
-              <div className="engine-cells">
-                <div><Path size={19} /><span>Orchestration</span></div>
-                <div><Brain size={19} /><span>Modes</span></div>
-                <div><Wrench size={19} /><span>Tools</span></div>
-                <div><Cpu size={19} /><span>Runtime</span></div>
-                <div><Cloud size={19} /><span>Models</span></div>
-              </div>
-            </section>
-          </div>
-          <div className="blueprint-flow" aria-hidden="true"><span /><ArrowRight size={20} /><span /></div>
-          <div className="blueprint-lower">
-            <section className="blueprint-stage blueprint-evidence">
-              <h2>Evidence intake</h2>
-              <div className="stage-node"><Globe size={17} /><span>Search and read</span></div>
-              <div className="stage-node"><Database size={17} /><span>Resolve and fetch instruments</span></div>
-              <div className="stage-node"><ShieldCheck size={17} /><span>Normalize sources</span></div>
-            </section>
-            <section className="blueprint-stage blueprint-analysis">
-              <h2>Analysis plane</h2>
-              <div className="stage-node"><Stack size={17} /><span>Plan and route skills</span></div>
-              <div className="stage-node"><FunctionIcon size={17} /><span>Value and stress test</span></div>
-              <div className="stage-node"><ChartLineUp size={17} /><span>Build scenarios</span></div>
-            </section>
-            <section className="blueprint-stage blueprint-output">
-              <h2>Report assembly</h2>
-              <div className="stage-node"><Path size={17} /><span>Chain tool results</span></div>
-              <div className="stage-node"><CheckCircle size={17} /><span>Compose citations</span></div>
-              <div className="stage-node"><Lightning size={17} /><span>Stream report and trace</span></div>
-            </section>
-          </div>
-          <div className="blueprint-result"><ShieldCheck size={19} /><span><strong>Auditable output</strong> Evidence, assumptions, calculations, and conclusions stay connected.</span></div>
+        <div className="hero-runtime-summary" aria-label="Live Underwrite runtime summary">
+          <div><Path size={24} /><span><strong>Orchestrate</strong><small>Plan and route</small></span></div>
+          <div><Database size={24} /><span><strong>Ground</strong><small>Fetch and normalize</small></span></div>
+          <div><FunctionIcon size={24} /><span><strong>Calculate</strong><small>Value and stress</small></span></div>
+          <div><FileText size={24} /><span><strong>Report</strong><small>Cite and stream</small></span></div>
         </div>
       </section>
+
+      <DetailedArchitectureMap />
 
       <section className="architecture-facts" aria-label="Current implementation facts">
         <div className="facts-intro"><h2>What is running today</h2><p>These numbers describe the current product implementation, not a performance benchmark.</p></div>
@@ -218,24 +336,46 @@ export function ArchitectureOverview() {
 
         <div className="evaluation-grid">
           <figure className="scale-figure">
-            <div className="figure-heading"><div><span>Outcome versus model scale</span><strong>Smaller can still compete</strong></div><small>Normalized rubric score (%)</small></div>
-            <svg viewBox="0 0 900 450" role="img" aria-labelledby="scale-title scale-description">
-              <title id="scale-title">Reference outcome score by model parameter count</title>
-              <desc id="scale-description">Six open-weight systems plotted on a logarithmic parameter scale, with the specialized 27 billion parameter runtime scoring 32.4 percent.</desc>
-              {[20, 25, 30, 35].map((tick) => <g key={tick}><line x1="82" y1={yForScore(tick)} x2="840" y2={yForScore(tick)} className="chart-grid-line" /><text x="66" y={yForScore(tick) + 4} textAnchor="end" className="chart-tick">{tick}</text></g>)}
-              {[30, 100, 300, 700].map((tick) => <g key={tick}><line x1={xForSize(tick)} y1="50" x2={xForSize(tick)} y2="390" className="chart-grid-line" /><text x={xForSize(tick)} y="418" textAnchor="middle" className="chart-tick">{tick}B</text></g>)}
-              <line x1="82" y1="50" x2="82" y2="390" className="chart-axis" /><line x1="82" y1="390" x2="840" y2="390" className="chart-axis" />
-              {SCALE_POINTS.map((point) => { const x = xForSize(point.size); const y = yForScore(point.score); return <g key={point.name} className={point.primary ? "scale-point scale-point-primary" : "scale-point"}><circle cx={x} cy={y} r={point.primary ? 8 : 6} /><text x={x + point.dx} y={y + point.dy} textAnchor={point.dx < 0 ? "end" : "start"}>{point.name} ({point.score}%)</text></g>; })}
-              <text x="460" y="446" textAnchor="middle" className="chart-axis-label">Model size, log scale</text>
+            <div className="figure-heading"><div><span>Cost-quality frontier</span><strong>Harness results across model backbones</strong></div><small>Estimated cost per query</small></div>
+            <div className="frontier-legend" aria-label="Chart legend">
+              <span data-group="runtime"><i />Underwrite runtime (reference run)</span>
+              <span data-group="react"><i />ReAct baseline</span>
+              <span data-group="agentic"><i />Other agentic systems</span>
+              <span data-group="finetuned"><i />Fine-tuned research agent</span>
+            </div>
+            <svg viewBox="0 0 1000 580" role="img" aria-labelledby="frontier-title frontier-description">
+              <title id="frontier-title">Reference cost and quality results across model backbones</title>
+              <desc id="frontier-description">The specialized runtime reaches 44.9 percent with Claude Opus 5 and 32.4 percent with Qwen 3.6 27B. Cost is logarithmic and cheaper configurations appear farther right.</desc>
+              <path d="M100 45 H930 V238 H790 V315 H650 V345 H520 V280 H360 V205 H205 V145 H100 Z" className="frontier-zone" />
+              <text x="906" y="87" textAnchor="end" className="frontier-zone-label">Efficient zone</text>
+              {SCORE_TICKS.map((tick) => <g key={tick}><line x1="100" y1={scoreY(tick)} x2="930" y2={scoreY(tick)} className="chart-grid-line" /><text x="82" y={scoreY(tick) + 4} textAnchor="end" className="chart-tick">{tick}</text></g>)}
+              {COST_TICKS.map((tick) => <g key={tick}><line x1={costX(tick)} y1="45" x2={costX(tick)} y2="500" className="chart-grid-line" /><text x={costX(tick)} y="528" textAnchor="middle" className="chart-tick">${tick}</text></g>)}
+              <line x1="100" y1="45" x2="100" y2="500" className="chart-axis" /><line x1="100" y1="500" x2="930" y2="500" className="chart-axis" />
+              {FRONTIER_POINTS.map((point, index) => {
+                const x = costX(point.cost);
+                const y = scoreY(point.score);
+                const anchor = (point.dx || 0) < 0 ? "end" : "start";
+                return (
+                  <g key={`${point.group}-${point.name}-${index}`} className={`frontier-point frontier-point-${point.group}`}>
+                    {point.group === "runtime" && <circle cx={x} cy={y} r="7" />}
+                    {point.group === "react" && <rect x={x - 6} y={y - 6} width="12" height="12" rx="1" />}
+                    {point.group === "agentic" && <polygon points={`${x},${y - 8} ${x - 8},${y + 7} ${x + 8},${y + 7}`} />}
+                    {point.group === "finetuned" && <polygon points={`${x},${y - 8} ${x - 8},${y} ${x},${y + 8} ${x + 8},${y}`} />}
+                    {point.label && <text x={x + (point.dx || 10)} y={y + (point.dy || -10)} textAnchor={anchor}>{point.name} ({point.score}%)</text>}
+                  </g>
+                );
+              })}
+              <text x="515" y="570" textAnchor="middle" className="chart-axis-label">Estimated cost per query, log scale. Cheaper to the right.</text>
+              <text x="20" y="275" textAnchor="middle" className="chart-axis-label" transform="rotate(-90 20 275)">Overall rubric score (%)</text>
             </svg>
-            <figcaption>Values reproduced from the public reference evaluation. “Specialized runtime” is a neutral label for the evaluated 27B configuration.</figcaption>
+            <figcaption>Published reference scores with chart-estimated query costs. This is the model matrix for the architecture pattern, not a benchmark rerun on the current repository.</figcaption>
           </figure>
 
           <article className="ablation-card">
             <div className="figure-heading"><div><span>Fixed-backbone ablation</span><strong>Orchestration drives most of the lift</strong></div><small>Normalized rubric score (%)</small></div>
             <div className="metric-table" role="table" aria-label="Fixed-backbone ablation results">
-              <div className="metric-row metric-header" role="row"><span>Configuration</span><span>Total</span><span>Pre</span><span>Post</span></div>
-              {ABLATION_ROWS.map((row) => <div className="metric-row" role="row" key={row.label}><strong>{row.label}</strong><span>{row.total.toFixed(1)}</span><span>{row.pre.toFixed(1)}</span><span>{row.post.toFixed(1)}</span></div>)}
+              <div className="metric-row metric-header" role="row"><span role="columnheader">Configuration</span><span role="columnheader">Total</span><span role="columnheader">Pre</span><span role="columnheader">Post</span></div>
+              {ABLATION_ROWS.map((row) => <div className="metric-row" role="row" key={row.label}><strong role="rowheader">{row.label}</strong><span role="cell">{row.total.toFixed(1)}</span><span role="cell">{row.pre.toFixed(1)}</span><span role="cell">{row.post.toFixed(1)}</span></div>)}
             </div>
             <p className="ablation-callout"><strong>+7.1 points</strong> from search-only to full orchestration. Training adds a further 0.4 point in this evaluation.</p>
           </article>
@@ -244,8 +384,8 @@ export function ArchitectureOverview() {
         <div className="backbone-table-wrap">
           <div className="figure-heading"><div><span>Cross-backbone coverage suite</span><strong>Same runtime, different models</strong></div><small>Dual-model judging, 1 to 5 scale</small></div>
           <div className="backbone-table" role="table" aria-label="Cross-backbone evaluation metrics">
-            <div className="backbone-row backbone-header" role="row"><span>Backbone</span><span>Faithfulness</span><span>Grounding</span><span>Coherence</span><span>Completeness</span></div>
-            {BACKBONE_ROWS.map((row) => <div className="backbone-row" role="row" key={row.name}><strong>{row.name}</strong><span>{row.faithfulness.toFixed(2)}</span><span>{row.grounding.toFixed(2)}</span><span>{row.coherence.toFixed(2)}</span><span>{row.completeness.toFixed(2)}</span></div>)}
+            <div className="backbone-row backbone-header" role="row"><span role="columnheader">Backbone</span><span role="columnheader">Faithfulness</span><span role="columnheader">Grounding</span><span role="columnheader">Coherence</span><span role="columnheader">Completeness</span></div>
+            {BACKBONE_ROWS.map((row) => <div className="backbone-row" role="row" key={row.name}><strong role="rowheader">{row.name}</strong><span role="cell">{row.faithfulness.toFixed(2)}</span><span role="cell">{row.grounding.toFixed(2)}</span><span role="cell">{row.coherence.toFixed(2)}</span><span role="cell">{row.completeness.toFixed(2)}</span></div>)}
           </div>
           <p className="table-note">Reference coverage suite: 11 tasks, three runs per task and backbone. These scores have not yet been rerun on this repository.</p>
         </div>
