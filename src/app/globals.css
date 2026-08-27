@@ -888,9 +888,9 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, a:focus-visib
 .mode-switch button[data-mode="analytical"][data-active="true"] { color: var(--accent); }
 
 @media (min-width: 1401px) {
-  .app-shell[data-mode="research"] .entry-layout { grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); align-items: stretch; gap: clamp(34px, 5vw, 70px); }
+  .app-shell[data-mode="research"] .entry-layout { grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); align-items: end; gap: clamp(34px, 5vw, 70px); }
   .app-shell[data-mode="research"] .entry-main { display: flex; flex-direction: column; justify-content: center; padding-bottom: 3px; }
-  .app-shell[data-mode="research"] .research-brief { align-self: stretch; }
+  .app-shell[data-mode="research"] .research-brief { align-self: end; }
   .app-shell[data-mode="analytical"] .entry-layout { grid-template-columns: minmax(0, 1.08fr) minmax(300px, .92fr); align-items: end; gap: clamp(30px, 4vw, 60px); }
 }
 
