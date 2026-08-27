@@ -4,6 +4,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import {
   ArrowRight,
   ArrowsClockwise,
+  ArrowUpRight,
   BookOpenText,
   Check,
   Clipboard,
@@ -187,28 +188,39 @@ export function ResearchWorkspace() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div className="brand-lockup"><BrandLogo /><span><strong>{BRAND.name}</strong><small>Financial research workbench</small></span></div>
+        <div className="brand-lockup"><BrandLogo /><span><strong>{BRAND.name}</strong><small>Investment research, with receipts</small></span></div>
         <ModeSwitch value={mode} onChange={setMode} />
-        <div className="topbar-actions"><Link className="icon-button" href="/architecture" aria-label="How Underwrite works"><Stack size={18} /></Link><button className="icon-button" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}</button><ModelSettings value={modelConfig} onChange={setModelConfig} /></div>
+        <div className="topbar-actions"><Link className="system-map-link" href="/architecture" aria-label="Open system map"><Stack size={17} /><span>System map</span><ArrowUpRight size={14} /></Link><button className="icon-button" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}</button><ModelSettings value={modelConfig} onChange={setModelConfig} /></div>
       </header>
 
       <div className="workspace-grid">
         <aside className="left-rail">
-          <button className="new-research" type="button" onClick={() => { setSubmittedQuestion(""); setQuestion(""); setReport(""); setEvents([]); setError(""); }}>New research <ArrowRight size={16} /></button>
+          <button className="new-research" type="button" onClick={() => { setSubmittedQuestion(""); setQuestion(""); setReport(""); setEvents([]); setError(""); }}>Start fresh <ArrowRight size={16} /></button>
           <section className="rail-section"><h2><ClockCounterClockwise size={15} />Recent</h2>{recent.length ? <div className="recent-list">{recent.map((item) => <button type="button" key={item} onClick={() => void startRun(item)}>{item}</button>)}</div> : <p className="rail-empty">Your latest questions will appear here.</p>}</section>
-          <section className="rail-section capability-section"><h2><Database size={15} />Harness</h2><div className="registry-stat"><strong>{health.tools || 23}</strong><span>constant tools</span></div><div className="registry-stat"><strong>{health.skills || 6}</strong><span>workflow skills</span></div><p>Modes change the reasoning policy, never the available trajectory.</p></section>
-          <footer className="rail-footer"><span>Informational research only</span><Link href="/architecture">How Underwrite works</Link></footer>
+          <section className="rail-section capability-section"><h2><Database size={15} />Research engine</h2><div className="registry-stat"><strong>{health.tools || 23}</strong><span>constant tools</span></div><div className="registry-stat"><strong>{health.skills || 6}</strong><span>workflow skills</span></div><p>Modes change the reasoning policy, never the available trajectory.</p></section>
+          <footer className="rail-footer"><span>Informational research only</span><Link href="/architecture">Explore the system map <ArrowUpRight size={12} /></Link></footer>
         </aside>
 
         <section className="research-stage">
           {!hasStarted ? (
             <div className="empty-workspace">
-              <div className="empty-kicker"><span />Evidence in. Decisions out.</div>
-              <h1>Research the market.<br /><span>Show your work.</span></h1>
-              <p>Underwrite plans the question, gathers live evidence, runs financial tools, and keeps the entire reasoning trail inspectable.</p>
-              <div className="composer composer-large">
-                <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask about a company, thesis, valuation, market event, or risk..." rows={4} onKeyDown={(event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") void startRun(); }} />
-                <div className="composer-footer"><span>{MODES[mode].description}</span><button className="send-button" type="button" disabled={question.trim().length < 3} onClick={() => void startRun()}><PaperPlaneTilt size={17} weight="fill" />Run research</button></div>
+              <div className="entry-layout">
+                <div className="entry-main">
+                  <div className="empty-kicker"><span />Evidence in. Decisions out.</div>
+                  <h1>Take a position.<br /><span>Show the proof.</span></h1>
+                  <p>Research a company, test a thesis, or stress a valuation with live evidence and an inspectable trail.</p>
+                  <div className="composer composer-large">
+                    <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask about a company, thesis, valuation, market event, or risk..." rows={4} onKeyDown={(event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") void startRun(); }} />
+                    <div className="composer-footer"><span>{MODES[mode].description}</span><button className="send-button" type="button" disabled={question.trim().length < 3} onClick={() => void startRun()}><PaperPlaneTilt size={17} weight="fill" />Run research</button></div>
+                  </div>
+                </div>
+                <aside className="research-brief" aria-label="Current research configuration">
+                  <div className="brief-heading"><span>Research lens</span><strong>{MODES[mode].label}</strong></div>
+                  <div className="brief-line"><span>Model</span><strong>{modelConfig.model || health.provider?.model || "Choose a model"}</strong></div>
+                  <div className="brief-line"><span>Coverage</span><strong>US, India, global</strong></div>
+                  <div className="brief-line"><span>Evidence</span><strong>Web + market data</strong></div>
+                  <Link href="/architecture" className="brief-map-link">See how it works <ArrowUpRight size={15} /></Link>
+                </aside>
               </div>
               <div className="example-prompts">{EXAMPLES.map((example) => <button type="button" key={example} onClick={() => { setQuestion(example); void startRun(example); }}>{example}<ArrowRight size={14} /></button>)}</div>
             </div>
