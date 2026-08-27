@@ -148,6 +148,14 @@ The no-key preview and browser-entered OpenAI key work without a database.
 Long research runs remain subject to the execution limits of the chosen host
 and plan.
 
+## Production security
+
+The app ships with CSP, clickjacking protection, restrictive browser permissions,
+bounded provider discovery, and in-memory request limits. Research page fetches
+reject local and private network destinations, revalidate redirects, and cap
+response size. For a shared public product, add authentication and a persistent
+distributed rate limiter before enabling a server-managed provider key.
+
 ### Docker
 
 ```bash

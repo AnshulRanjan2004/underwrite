@@ -1,4 +1,5 @@
 import type { ModelConfig } from "./types";
+import { allowsPrivateModelEndpoints, assertSafeModelEndpoint } from "./network";
 
 export type ProviderKind =
   | "demo"
@@ -31,13 +32,17 @@ function safeBaseUrl(value: string) {
   if (
     process.env.NODE_ENV === "production" &&
     privateHost &&
-    process.env.ALLOW_PRIVATE_MODEL_ENDPOINTS !== "true"
+    !allowsPrivateModelEndpoints()
   ) {
     throw new Error(
       "Private model endpoints are disabled in production. Set ALLOW_PRIVATE_MODEL_ENDPOINTS=true only on a trusted self-hosted server.",
     );
   }
   return value.replace(/\/$/, "");
+}
+
+export async function validateModelEndpoint(value: string | undefined) {
+  if (value) await assertSafeModelEndpoint(value);
 }
 
 export function resolveProvider(override?: ModelConfig): ProviderConfig {

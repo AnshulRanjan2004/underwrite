@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { resolveReferences } from "./chaining";
+import { assertSafeOutboundUrl } from "./network";
 import { SKILLS } from "./skills";
 import type { ToolContext, ToolResult } from "./types";
 
@@ -36,6 +37,7 @@ async function fetchYahoo(path: string) {
       "user-agent": "Mozilla/5.0 Underwrite/0.1",
     },
     next: { revalidate: 60 },
+    signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) {
     throw new ToolExecutionError(
@@ -108,6 +110,99 @@ function stats(values: number[]) {
   return { mean, variance, stdDev: Math.sqrt(variance) };
 }
 
+function evaluateExpression(expression: string) {
+  const normalized = expression.replaceAll(",", "").replaceAll("^", "**").replace(/\s+/g, "");
+  const tokens = normalized.match(/(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?|\*\*|[()+\-*/%]/gi);
+  if (!tokens || tokens.join("") !== normalized) {
+    throw new ToolExecutionError("Expression contains unsupported characters.");
+  }
+  let index = 0;
+  const apply = (operator: string, left: number, right: number) => {
+    const value = operator === "+" ? left + right
+      : operator === "-" ? left - right
+        : operator === "*" ? left * right
+          : operator === "/" ? left / right
+            : operator === "%" ? left % right
+              : Math.pow(left, right);
+    if (!Number.isFinite(value)) throw new ToolExecutionError("Expression did not produce a finite number.");
+    return value;
+  };
+  const parsePrimary = (): number => {
+    const token = tokens[index++];
+    if (token === "+") return parsePrimary();
+    if (token === "-") return -parsePrimary();
+    if (token === "(") {
+      const value = parseSum();
+      if (tokens[index++] !== ")") throw new ToolExecutionError("Expression has unmatched parentheses.");
+      return value;
+    }
+    const value = Number(token);
+    if (!Number.isFinite(value)) throw new ToolExecutionError("Expression contains an invalid number.");
+    return value;
+  };
+  const parsePower = (): number => {
+    const left = parsePrimary();
+    if (tokens[index] !== "**") return left;
+    index += 1;
+    return apply("**", left, parsePower());
+  };
+  const parseProduct = (): number => {
+    let value = parsePower();
+    while (["*", "/", "%"].includes(tokens[index] || "")) {
+      value = apply(tokens[index++], value, parsePower());
+    }
+    return value;
+  };
+  const parseSum = (): number => {
+    let value = parseProduct();
+    while (["+", "-"].includes(tokens[index] || "")) {
+      value = apply(tokens[index++], value, parseProduct());
+    }
+    return value;
+  };
+  const result = parseSum();
+  if (index !== tokens.length) throw new ToolExecutionError("Expression could not be parsed.");
+  return result;
+}
+
+async function fetchPublicPage(value: string) {
+  let url = await assertSafeOutboundUrl(value);
+  for (let hop = 0; hop < 4; hop += 1) {
+    const response = await fetch(url, {
+      headers: { "user-agent": "Mozilla/5.0 Underwrite/0.1", accept: "text/html, text/plain, application/xhtml+xml" },
+      redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (![301, 302, 303, 307, 308].includes(response.status)) return { response, url };
+    const location = response.headers.get("location");
+    if (!location) throw new ToolExecutionError("The page redirect did not include a destination.");
+    url = await assertSafeOutboundUrl(new URL(location, url).toString());
+  }
+  throw new ToolExecutionError("The page redirected too many times.");
+}
+
+async function readTextWithLimit(response: Response, maxBytes: number) {
+  const contentLength = Number(response.headers.get("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    throw new ToolExecutionError("The page is too large to inspect safely.");
+  }
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new ToolExecutionError("The page is too large to inspect safely.");
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
 function returns(values: number[]) {
   return values.slice(1).map((value, index) => value / values[index] - 1);
 }
@@ -141,17 +236,10 @@ const toolSpecs: ToolSpec[] = [
     tier: "core",
     description: "Evaluate a basic arithmetic expression containing numbers, parentheses, and standard operators.",
     tags: ["math", "calculation"],
-    schema: z.object({ expression: z.string().min(1) }),
+    schema: z.object({ expression: z.string().min(1).max(240) }),
     execute: async (args) => {
-      const { expression } = z.object({ expression: z.string() }).parse(args);
-      if (!/^[0-9eE+\-*/().,\s%^]+$/.test(expression)) {
-        throw new ToolExecutionError("Expression contains unsupported characters.");
-      }
-      const normalized = expression.replaceAll(",", "").replaceAll("^", "**");
-      const value = Function(`"use strict"; return (${normalized});`)() as unknown;
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new ToolExecutionError("Expression did not produce a finite number.");
-      }
+      const { expression } = z.object({ expression: z.string().min(1).max(240) }).parse(args);
+      const value = evaluateExpression(expression);
       return result(`Result: ${value}`, { expression, value });
     },
   },
@@ -276,15 +364,16 @@ const toolSpecs: ToolSpec[] = [
       const { url, maxCharacters = 14000 } = z
         .object({ url: z.string().url(), maxCharacters: z.number().int().optional() })
         .parse(args);
-      const response = await fetch(url, {
-        headers: { "user-agent": "Mozilla/5.0 Underwrite/0.1" },
-        signal: AbortSignal.timeout(15000),
-      });
+      const { response, url: finalUrl } = await fetchPublicPage(url);
       if (!response.ok) throw new ToolExecutionError(`Page returned ${response.status}.`);
-      const html = await response.text();
+      const contentType = response.headers.get("content-type") || "";
+      if (!/^(text\/html|text\/plain|application\/xhtml\+xml)/i.test(contentType)) {
+        throw new ToolExecutionError("Only HTML and plain-text pages can be inspected.");
+      }
+      const html = await readTextWithLimit(response, 2_000_000);
       const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]
         ?.replace(/\s+/g, " ")
-        .trim() || new URL(url).hostname;
+        .trim() || finalUrl.hostname;
       const text = html
         .replace(/<script[\s\S]*?<\/script>/gi, " ")
         .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -294,8 +383,8 @@ const toolSpecs: ToolSpec[] = [
         .replace(/\s+/g, " ")
         .trim()
         .slice(0, maxCharacters);
-      context.emit({ type: "source", at: new Date().toISOString(), title, url });
-      return result(`# ${title}\n\n${text}`, { title, url, text }, { fetchedAt: new Date().toISOString() });
+      context.emit({ type: "source", at: new Date().toISOString(), title, url: finalUrl.toString() });
+      return result(`# ${title}\n\n${text}`, { title, url: finalUrl.toString(), text }, { fetchedAt: new Date().toISOString() });
     },
   },
   {

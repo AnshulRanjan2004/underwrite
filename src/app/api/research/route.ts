@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { runResearch } from "@/lib/harness/agent";
 import type { RunEvent } from "@/lib/harness/types";
+import { checkRateLimit, rateLimitHeaders } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -26,13 +27,17 @@ function frame(event: RunEvent) {
 }
 
 export async function POST(request: Request) {
+  const rate = checkRateLimit(request, "research", { limit: 6, windowMs: 10 * 60_000 });
+  if (!rate.allowed) {
+    return Response.json({ error: "Too many research runs. Please wait before starting another." }, { status: 429, headers: rateLimitHeaders(rate) });
+  }
   let input: z.infer<typeof requestSchema>;
   try {
     input = requestSchema.parse(await request.json());
-  } catch (error) {
+  } catch {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Invalid request" },
-      { status: 400 },
+      { error: "Invalid research request." },
+      { status: 400, headers: rateLimitHeaders(rate) },
     );
   }
 
@@ -47,6 +52,7 @@ export async function POST(request: Request) {
 
   return new Response(stream, {
     headers: {
+      ...rateLimitHeaders(rate),
       "content-type": "text/event-stream; charset=utf-8",
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",

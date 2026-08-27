@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { runDemo } from "./demo";
 import { buildInstructions } from "./modes";
-import { resolveProvider } from "./providers";
+import { resolveProvider, validateModelEndpoint } from "./providers";
 import {
   executeTool,
   openAITools,
@@ -290,6 +290,9 @@ async function runCompatible(
 export async function runResearch(request: ResearchRequest, emit: ToolEventEmitter) {
   const provider = resolveProvider(request.modelConfig);
   if (request.demo || provider.kind === "demo") return runDemo(request, emit);
+  if (provider.kind === "ollama" || provider.kind === "openai-compatible") {
+    await validateModelEndpoint(provider.baseUrl);
+  }
 
   const context: ToolContext = {
     results: new Map(),
@@ -310,7 +313,18 @@ export async function runResearch(request: ResearchRequest, emit: ToolEventEmitt
     emit({ type: "done", at: new Date().toISOString(), data: { provider: provider.kind, model: provider.model } });
     return report;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Research run failed.";
+    const message = error instanceof Error && [
+      "An OpenAI API key is required.",
+      "GEMINI_API_KEY is not configured.",
+      "A base URL and model ID are required for an OpenAI-compatible provider.",
+      "The agent reached its step limit without producing a report.",
+      "The local agent reached its step limit without producing a report.",
+      "The selected model reached its step limit without producing a report. Confirm that it supports tool calling.",
+      "Private and local network URLs are not allowed.",
+      "The URL host could not be resolved.",
+    ].includes(error.message)
+      ? error.message
+      : "The model request failed. Verify the provider connection and try again.";
     emit({ type: "error", at: new Date().toISOString(), message });
     emit({ type: "done", at: new Date().toISOString(), data: { provider: provider.kind, error: message } });
     throw error;

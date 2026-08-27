@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolveReference, resolveReferences } from "./chaining";
 import { isResearchMode } from "./modes";
+import { assertSafeOutboundUrl, isPrivateAddress } from "./network";
 import { executeTool } from "./tools";
 import { tickerFrom } from "./demo";
 import type { ToolContext, ToolResult } from "./types";
@@ -61,6 +62,12 @@ describe("reference chaining", () => {
 });
 
 describe("financial compute tools", () => {
+  it("evaluates bounded arithmetic without dynamic code execution", async () => {
+    const output = await executeTool("calc", { expression: "(1,250 + 250) * 2^2" }, "calc_1", context());
+    expect(output.structured.value).toBe(6000);
+    await expect(executeTool("calc", { expression: "process.exit()" }, "calc_2", context())).rejects.toThrow("unsupported characters");
+  });
+
   it("calculates WACC with CAPM and after-tax debt cost", async () => {
     const ctx = context(["compute_valuation_wacc"]);
     const output = await executeTool(
@@ -130,5 +137,19 @@ describe("financial compute tools", () => {
     );
     expect(output.structured.expectedPrice).toBeCloseTo(110, 5);
     expect(output.structured.priceDispersion).toEqual(expect.any(Number));
+  });
+});
+
+describe("outbound network safety", () => {
+  it("recognizes non-public IP ranges while allowing public address literals", () => {
+    expect(isPrivateAddress("127.0.0.1")).toBe(true);
+    expect(isPrivateAddress("10.0.0.8")).toBe(true);
+    expect(isPrivateAddress("169.254.169.254")).toBe(true);
+    expect(isPrivateAddress("::1")).toBe(true);
+    expect(isPrivateAddress("8.8.8.8")).toBe(false);
+  });
+
+  it("rejects localhost before an outbound request is attempted", async () => {
+    await expect(assertSafeOutboundUrl("http://127.0.0.1:3000")).rejects.toThrow("Private and local network URLs");
   });
 });

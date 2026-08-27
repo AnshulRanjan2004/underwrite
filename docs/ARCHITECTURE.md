@@ -67,6 +67,10 @@ Underwrite research or model-list route selected by the user. The app does not
 write them to a server database or include them in streamed events. Browser
 local storage is opt-in. Public production deployments block private network
 model URLs unless `ALLOW_PRIVATE_MODEL_ENDPOINTS=true` is explicitly set.
+Browser-entered source pages are restricted to public HTTP(S) hosts, redirects
+are rechecked, and page size is capped. The API applies conservative in-memory
+limits to model discovery and research runs; multi-instance deployments should
+replace this with a shared limiter.
 
 For a multi-user commercial deployment, add authentication, encrypted secret
 storage, persistent rate limiting, durable sessions, and an audit log before
